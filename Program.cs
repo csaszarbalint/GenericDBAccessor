@@ -8,9 +8,22 @@ namespace GenericDBAccessor
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            const string connectionString = "server=localhost;port=3307;pwd=;uid=root;database=webshop";
 
-            DbConnection connection = new MySqlConnection();
+            using (var conn = new MySqlConnection(connectionString))
+            {
+                conn.Open();
+                using (var cmd = new MySqlCommand("SELECT * FROM product", conn))
+                {
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Console.WriteLine($"{reader["id"]} {reader["name"]} {reader["price"]}");
+                        }
+                    }
+                }
+            }
 
             DBAccessor dbAccessor = new DBAccessor();
         }
