@@ -12,7 +12,9 @@ namespace GenericDBAccessor
 
             using (var conn = new MySqlConnection(connectionString))
             {
-                conn.Open();
+                DBAccessor dbAccessor = new DBAccessor(conn);
+
+                /*conn.Open();
                 using (var cmd = new MySqlCommand("SELECT * FROM product", conn))
                 {
                     using (var reader = cmd.ExecuteReader())
@@ -22,10 +24,8 @@ namespace GenericDBAccessor
                             Console.WriteLine($"{reader["id"]} {reader["name"]} {reader["price"]}");
                         }
                     }
-                }
+                }*/
             }
-
-            DBAccessor dbAccessor = new DBAccessor();
         }
     }
 }
