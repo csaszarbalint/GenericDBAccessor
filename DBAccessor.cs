@@ -38,7 +38,7 @@ namespace GenericDBAccessor
             using(var cmd = _connection.CreateCommand())
             {
                 cmd.CommandText =
-                    $"SELECT * FROM ";
+                    $"SELECT * FROM {_table.Name}";
             }
 
             return result;
@@ -63,8 +63,8 @@ namespace GenericDBAccessor
             _table = new DbTable();
 
             //table name
-            var tableAttribute = (TableAttribute)t.GetCustomAttributes(false)
-                .First(a => a.GetType() == typeof(TableAttribute));
+            var tableAttribute = (TableAttribute?)t.GetCustomAttributes(false)
+                .FirstOrDefault(a => a.GetType() == typeof(TableAttribute));
 
             _table.Name = tableAttribute != null ? tableAttribute.Name : t.Name.ToLower();
 
@@ -72,7 +72,13 @@ namespace GenericDBAccessor
             var columnAttributes = t.GetProperties();
             foreach (var e in columnAttributes)
             {
-                 
+                var columnAttribute = (ColumnAttribute?)e.GetCustomAttributes(false)
+                    .FirstOrDefault(a => a.GetType() == typeof(ColumnAttribute));
+                
+                var columnName = columnAttribute != null ? columnAttribute.Name : e.Name.ToLower();
+
+                if(_table.Fields == null) _table.Fields = new List<string>();
+                _table.Fields.Add(columnName);
             }
         }
     }

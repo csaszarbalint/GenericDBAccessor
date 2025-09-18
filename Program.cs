@@ -14,6 +14,8 @@ namespace GenericDBAccessor
             {
                 DBAccessor<Book> BookAccessor = new DBAccessor<Book>(conn);
 
+                BookAccessor.Read();
+
                 /*conn.Open();
                 using (var cmd = new MySqlCommand("SELECT * FROM product", conn))
                 {
