@@ -11,8 +11,4 @@
     <PackageReference Include="MySql.Data" Version="9.4.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\MyDBAccessor\MyDBAccessor.csproj" />
-  </ItemGroup>
-
 </Project>

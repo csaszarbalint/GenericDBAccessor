@@ -1,4 +1,4 @@
-﻿using MyDBAccessor;
+﻿using GenericDBAccessor.Models;
 using MySql.Data.MySqlClient;
 using System.Data.Common;
 
@@ -12,7 +12,7 @@ namespace GenericDBAccessor
 
             using (var conn = new MySqlConnection(connectionString))
             {
-                DBAccessor dbAccessor = new DBAccessor(conn);
+                DBAccessor<Book> BookAccessor = new DBAccessor<Book>(conn);
 
                 /*conn.Open();
                 using (var cmd = new MySqlCommand("SELECT * FROM product", conn))
