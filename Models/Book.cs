@@ -15,8 +15,11 @@ namespace GenericDBAccessor.Models
         [Key]
         public int Id { get; set; }
         public string Title { get; set; }
+        [Column("authorId")]
         public int AuthorId { get; set; }  
+        [Column("year")]
         public int PublishingYear { get; set; }
+        [Column("pages")]
         public int NumberOfPages {  get; set; }
     }
 }

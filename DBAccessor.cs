@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
+using Org.BouncyCastle.Asn1.Crmf;
 
 namespace GenericDBAccessor
 {
@@ -13,7 +17,8 @@ namespace GenericDBAccessor
         private struct DbTable
         {
             public string Name;
-            public List<string> Fields;
+            public Dictionary<string, PropertyInfo> AttributeMap;
+            public (string, PropertyInfo) Key;
         }
 
         private MySqlConnection _connection;
@@ -38,7 +43,26 @@ namespace GenericDBAccessor
             using(var cmd = _connection.CreateCommand())
             {
                 cmd.CommandText =
-                    $"SELECT * FROM {_table.Name}";
+                    $"SELECT " +
+                    $"{String.Join(", ",_table.AttributeMap.Keys)}" +
+                    $" FROM {_table.Name};";
+
+                using (var reader = cmd.ExecuteReader()) 
+                {
+                    while(reader.Read())
+                    {
+                        T obj = (T)Activator.CreateInstance(typeof(T));
+                        if (obj == null) throw new ArgumentNullException();
+
+                        int offset = 0;
+                        foreach(var attribute in _table.AttributeMap)
+                        {
+                            attribute.Value.SetValue(obj, reader[offset++]);
+                        }
+
+                        result.Add(obj);
+                    }
+                }
             }
 
             return result;
@@ -58,7 +82,7 @@ namespace GenericDBAccessor
         {
             throw new NotImplementedException();
         }
-        private void SetTable(Type t)
+        internal void SetTable(Type t)
         {
             _table = new DbTable();
 
@@ -72,13 +96,17 @@ namespace GenericDBAccessor
             var columnAttributes = t.GetProperties();
             foreach (var e in columnAttributes)
             {
-                var columnAttribute = (ColumnAttribute?)e.GetCustomAttributes(false)
+                var propertyAttributes = e.GetCustomAttributes(false);
+                
+                if(propertyAttributes.Select(e => e.GetType()).Contains(typeof(KeyAttribute))) _table.Key = ()
+
+                var columnAttribute = (ColumnAttribute?)propertyAttributes
                     .FirstOrDefault(a => a.GetType() == typeof(ColumnAttribute));
                 
                 var columnName = columnAttribute != null ? columnAttribute.Name : e.Name.ToLower();
 
-                if(_table.Fields == null) _table.Fields = new List<string>();
-                _table.Fields.Add(columnName);
+                if(_table.AttributeMap == null) _table.AttributeMap = new Dictionary<string, PropertyInfo>();
+                _table.AttributeMap.Add(columnName, e);
             }
         }
     }
