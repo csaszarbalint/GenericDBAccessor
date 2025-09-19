@@ -21,5 +21,10 @@ namespace GenericDBAccessor.Models
         public int PublishingYear { get; set; }
         [Column("pages")]
         public int NumberOfPages {  get; set; }
+
+        public override string ToString()
+        {
+            return $"{Id} {Title} {AuthorId} {PublishingYear} {NumberOfPages}";
+        }
     }
 }

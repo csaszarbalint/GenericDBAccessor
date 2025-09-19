@@ -1,6 +1,8 @@
 ﻿using GenericDBAccessor.Models;
 using MySql.Data.MySqlClient;
 using System.Data.Common;
+using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography;
 
 namespace GenericDBAccessor
 {
@@ -15,6 +17,7 @@ namespace GenericDBAccessor
                 conn.Open();
                 DBAccessor<Book> BookAccessor = new DBAccessor<Book>(conn);
 
+                //read all
                 Console.WriteLine(
                     BookAccessor.Read()
                     .Aggregate("", (acc, obj) =>
@@ -23,19 +26,19 @@ namespace GenericDBAccessor
                     })
                 );
 
-                
+                //read 
+                Console.WriteLine(BookAccessor.Read(10));
 
-                /*conn.Open();
-                using (var cmd = new MySqlCommand("SELECT * FROM product", conn))
-                {
-                    using (var reader = cmd.ExecuteReader())
+                //create
+                Console.WriteLine(BookAccessor.Create(
+                    new Book()
                     {
-                        while (reader.Read())
-                        {
-                            Console.WriteLine($"{reader["id"]} {reader["name"]} {reader["price"]}");
-                        }
-                    }
-                }*/
+                        Id = 3,
+                        Title = "New Book",
+                        AuthorId = 1,
+                        NumberOfPages = 123,
+                        PublishingYear = 2024
+                    }));
             }
         }
     }
