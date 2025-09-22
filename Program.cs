@@ -18,27 +18,59 @@ namespace GenericDBAccessor
                 DBAccessor<Book> BookAccessor = new DBAccessor<Book>(conn);
 
                 //read all
-                Console.WriteLine(
+                {
+                    Console.WriteLine("ReadAll: \n" +
                     BookAccessor.Read()
-                    .Aggregate("", (acc, obj) =>
-                    {
-                        return acc += $"{obj.Id} {obj.Title} {obj.NumberOfPages}\n";
-                    })
-                );
+                        .Aggregate("", (acc, obj) =>
+                        {
+                            return acc += $"{obj.Id} {obj.Title} {obj.NumberOfPages}\n";
+                        })
+                    );
+                }
+
+                Console.ReadKey();
 
                 //read 
-                Console.WriteLine(BookAccessor.Read(10));
+                {
+                    Console.WriteLine("Read: " + BookAccessor.Read(10));
+                }
+
+                Console.ReadKey();
 
                 //create
-                Console.WriteLine(BookAccessor.Create(
-                    new Book()
-                    {
-                        Id = 3,
-                        Title = "New Book",
-                        AuthorId = 1,
-                        NumberOfPages = 123,
-                        PublishingYear = 2024
-                    }));
+                {
+                    Console.WriteLine("Create: " + BookAccessor.Create(
+                        new Book()
+                        {
+
+                            Title = "New Book",
+                            AuthorId = 1,
+                            NumberOfPages = 123,
+                            PublishingYear = 2024
+                        }));
+                }
+
+                Console.ReadKey();
+
+                //update
+                {
+                    Console.WriteLine("Updated: " + BookAccessor.Update(58,
+                        new Book()
+                        {
+                            Id = 58,
+                            Title = "Updated Book",
+                            AuthorId = 1,
+                            NumberOfPages = 321,
+                            PublishingYear = 1988
+                        }));
+                }
+
+                Console.ReadKey();
+
+                //delete
+                {
+                    Console.WriteLine("Deleted: " + BookAccessor.Delete(58));
+                }
             }
         }
     }

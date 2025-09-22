@@ -1,16 +1,18 @@
-﻿using System;
+﻿using MySql.Data.MySqlClient;
+using Mysqlx.Crud;
+using MySqlX.XDevAPI.Relational;
+using Org.BouncyCastle.Asn1.Cms;
+using Org.BouncyCastle.Asn1.Crmf;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using MySql.Data.MySqlClient;
-using Mysqlx.Crud;
-using MySqlX.XDevAPI.Relational;
-using Org.BouncyCastle.Asn1.Crmf;
 
 namespace GenericDBAccessor
 {
@@ -30,8 +32,6 @@ namespace GenericDBAccessor
 
         private MySqlConnection _connection;
         private DbTable _table;
-
-        private List<T> _cashedData = null;
 
         public DBAccessor(MySqlConnection conn)
         { 
@@ -63,25 +63,35 @@ namespace GenericDBAccessor
                 var columnAttributes = _table.AttributeMap
                     .Where(a => a.AttributeType == typeof(ColumnAttribute))
                     .ToList();
+
+                var maxId = 0;
+                using (var cmd2 = _connection.CreateCommand())
+                {
+                    cmd2.CommandText = $"SELECT MAX({keyProperty.Name}) AS result FROM {_table.Name}";
+                    var reader = cmd2.ExecuteReader();
+                    reader.Read();
+                    maxId = reader.GetInt32("result");
+                    reader.Close();
+                }
+
                 cmd.CommandText =
                     $"INSERT INTO {_table.Name} " +
-                    $"({String.Join(", ", columnAttributes.Select(a => a.Name))}) " +
-                    $"VALUES ({String.Join(", ", columnAttributes.Select(a => "@" + a.Name))});";
-                foreach(var attribute in columnAttributes)
+                    $"({keyAttribute.Name}, {String.Join(", ", columnAttributes.Select(a => a.Name))}) " +
+                    $"VALUES ({++maxId}, {String.Join(", ", columnAttributes.Select(a => "@" + a.Name))});";
+
+                foreach (var attribute in columnAttributes)
                 {
                     var value = attribute.Property.GetValue(obj);
                     cmd.Parameters.AddWithValue("@" + attribute.Name, value);
                 }
+
                 var rowsAffected = cmd.ExecuteNonQuery();
 
-                _cashedData = null;
                 return rowsAffected > 0;
             }
         }
         public IEnumerable<T> Read()
         {
-            if(_cashedData != null)
-                return _cashedData;
             var result = new List<T>();
 
             using(var cmd = _connection.CreateCommand())
@@ -108,7 +118,7 @@ namespace GenericDBAccessor
                     }
                 }
             }
-            _cashedData = result;
+
             return result;
         }
 
@@ -173,7 +183,6 @@ namespace GenericDBAccessor
                 }
                 var rowsAffected = cmd.ExecuteNonQuery();
 
-                _cashedData = null;
                 return rowsAffected > 0 ? obj : throw new Exception("Update failed");
             }
         }
@@ -182,14 +191,32 @@ namespace GenericDBAccessor
         {
             if (!KeyExists(id))
                 throw new KeyNotFoundException($"No entry with id {id} found");
-            
 
+            T obj = Read(id);
+
+            using (var cmd = _connection.CreateCommand())
+            {
+                var keyAttribute = _table.AttributeMap
+                    .FirstOrDefault(a => a.AttributeType == typeof(KeyAttribute));
+                var columnAttributes = _table.AttributeMap
+                    .Where(a => a.AttributeType == typeof(ColumnAttribute))
+                    .ToList();
+
+                cmd.CommandText =
+                    $"DELETE FROM {_table.Name} " +
+                    $"WHERE {keyAttribute.Name} = {id};";
+
+                var rowsAffected = cmd.ExecuteNonQuery();
+
+            }
+
+            return obj;
         }
 
         //helpers
         internal bool KeyExists(int id)
         {
-            IEnumerable<T> data = _cashedData == null ? Read() : _cashedData;
+            IEnumerable<T> data = Read();
 
             var keyAttribute = _table.AttributeMap
                 .FirstOrDefault(a => a.AttributeType == typeof(KeyAttribute));
